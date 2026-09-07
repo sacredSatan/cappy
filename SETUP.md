@@ -100,16 +100,41 @@ The git directory lives **outside** the vault, because iCloud must never see a
 ```bash
 VAULT="$(node -e 'console.log(require("./lib/config.js").VAULT)')"
 GITDIR="$HOME/.cappy-vault.git"
-git --git-dir="$GITDIR" --work-tree="$VAULT" init
+git --git-dir="$GITDIR" --work-tree="$VAULT" init -b main
+
+# Exclusions live in the git dir, so no .gitignore has to sit in your vault.
+# Without these, Obsidian's UI state changes on every pane move and every
+# snapshot is noise.
+cat > "$GITDIR/info/exclude" <<'RULES'
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/**/*.json.bak
+.trash/
+.DS_Store
+.*.tmp.*
+*.tmp.*
+RULES
+
 git --git-dir="$GITDIR" --work-tree="$VAULT" add -A
 git --git-dir="$GITDIR" --work-tree="$VAULT" commit -m "initial vault snapshot"
 ```
 
-Once that exists, `run.js` commits once a day automatically. Browse history:
+Once that exists, `run.js` commits once a day automatically — the first run of
+each day, throttled by `~/.cappy-last-snapshot`.
 
 ```bash
+# history
 git --git-dir="$HOME/.cappy-vault.git" --work-tree="$VAULT" log --stat
+
+# what a note looked like yesterday
+git --git-dir="$HOME/.cappy-vault.git" --work-tree="$VAULT" show HEAD~1:"notes/Whatever.md"
+
+# put a note back
+git --git-dir="$HOME/.cappy-vault.git" --work-tree="$VAULT" checkout HEAD~1 -- "notes/Whatever.md"
 ```
+
+Snapshots are daily, so this recovers yesterday's version, not the last edit.
+Obsidian's File Recovery core plugin covers the finer-grained case.
 
 Obsidian's File Recovery core plugin is a second net.
 
