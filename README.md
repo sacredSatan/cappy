@@ -116,6 +116,19 @@ anything you have already positioned; existing nodes are never reflowed. Group
 boxes are recomputed each run from their members, so they follow your layout
 rather than fighting it.
 
+Canvas cards render the whole note, properties panel included, so a filed
+note's five properties eat most of a short card. The default node is 400x420 to
+leave room for body text below them. Tune it in `cappy.config.json`:
+
+```json
+{ "canvasNodeWidth": 400, "canvasNodeHeight": 420 }
+```
+
+Existing nodes keep their stored size, so run `--relayout` after changing it.
+Obsidian's **Settings > Editor > Properties in document > Hidden** also frees
+the space, but it is vault-wide and hides the `approve` checkbox you review
+with — taller cards are the better trade.
+
 ```bash
 node canvas.js                 # every topic
 node canvas.js ai              # one topic

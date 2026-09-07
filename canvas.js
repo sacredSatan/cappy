@@ -20,7 +20,7 @@ const log = (...a) => console.log(...a);
 const warn = (...a) => console.warn('  !', ...a);
 const rel = (f) => path.relative(C.VAULT, f);
 
-const NODE_W = 400, NODE_H = 200, GUTTER = 40, PAD = 40;
+const NODE_W = C.CANVAS_NODE_W, NODE_H = C.CANVAS_NODE_H, GUTTER = 40, PAD = 40;
 
 // Stable ids: regenerating must not churn the file or lose manual positions.
 const hash = (s) => crypto.createHash('sha1').update(s).digest('hex').slice(0, 16);
