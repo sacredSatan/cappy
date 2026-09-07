@@ -72,3 +72,9 @@ mtimes past the settle window with `touch -t`, or everything is skipped.
 
 `--dry-run` still calls the model (~$0.006/note). Selection, validation and
 frontmatter logic can all be exercised without any model call at all.
+
+`npm test` covers exactly that: body preservation, quoting and scalar types,
+taxonomy parsing, and both validation gates (`validate` in classify.js, `plan`
+in accept.js). It needs no vault and no network. Run it before and after
+touching `lib/frontmatter.js` — body preservation is the property that matters
+most and the easiest to break silently.

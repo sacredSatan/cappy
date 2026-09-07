@@ -94,6 +94,8 @@ node accept.js --dry-run
 node accept.js             # file everything approved
 node maps.js               # regenerate maps and Review.md
 node run.js                # all of the above, what launchd runs
+
+npm test                   # 38 assertions, no model calls, no vault needed
 ```
 
 ## Setup

@@ -222,4 +222,6 @@ function main() {
   log(`done: ${wrote} written, ${failed} failed, $${cost.toFixed(4)}`);
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { validate, buildStdin };

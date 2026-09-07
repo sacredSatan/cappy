@@ -18,6 +18,7 @@
     "classify": "node classify.js",
     "accept": "node accept.js",
     "maps": "node maps.js",
-    "run": "node run.js"
+    "run": "node run.js",
+    "test": "node test.js"
   }
 }

@@ -154,4 +154,6 @@ function main() {
   if (additions.length) log('taxonomy changed — regenerate maps (step 4: maps.js)');
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { plan };
