@@ -1,0 +1,23 @@
+{
+  "name": "cappy",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tag and link your Obsidian quick-capture notes with Claude Code, review from your phone.",
+  "license": "WTFPL",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "bin": {
+    "cappy": "./run.js"
+  },
+  "scripts": {
+    "setup": "node setup.js",
+    "classify": "node classify.js",
+    "accept": "node accept.js",
+    "maps": "node maps.js",
+    "run": "node run.js"
+  }
+}

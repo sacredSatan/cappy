@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>{{LABEL}}</string>
+
+  <!-- Absolute paths only: launchd's PATH is minimal and its cwd is not ours. -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{NODE}}</string>
+    <string>{{REPO}}/run.js</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>{{REPO}}</string>
+
+  <key>StartInterval</key>
+  <integer>{{INTERVAL}}</integer>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>{{LOG_DIR}}/out.log</string>
+  <key>StandardErrorPath</key>
+  <string>{{LOG_DIR}}/err.log</string>
+
+  <!-- Deliberately no ANTHROPIC_API_KEY: it outranks the claude.ai login and
+       would bill the API account instead of the subscription. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>{{PATH}}</string>
+  </dict>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+</dict>
+</plist>
