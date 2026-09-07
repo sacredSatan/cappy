@@ -69,8 +69,11 @@ function main() {
   const accepted = step('accept', 'accept.js');
   // maps.js is a no-op when nothing changed, so it is cheap to always run and
   // safer than trying to guess whether the taxonomy moved.
-  if (classified || accepted) step('maps', 'maps.js');
-  else log('--- maps --- skipped (earlier steps failed)');
+  if (classified || accepted) {
+    step('maps', 'maps.js');
+    // Deterministic and cheap; runs last so it sees freshly filed notes.
+    step('canvas', 'canvas.js');
+  } else log('--- maps/canvas --- skipped (earlier steps failed)');
   try { snapshot(); } catch (e) { log(`snapshot error: ${e.message}`); }
   log('cappy done');
 }

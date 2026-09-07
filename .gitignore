@@ -9,3 +9,6 @@ launchd/*.plist
 
 # The original build spec — superseded by README.md and SETUP.md.
 SPEC.md
+
+# Task brief for the canvas feature — superseded by README.md.
+docs/canvas.md

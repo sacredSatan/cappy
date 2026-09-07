@@ -26,9 +26,11 @@ transport.
           |                        new tags appended to taxonomy
           v
   maps.js                          _maps/<node>.md refreshed    cappy
+  canvas.js                        _maps/<node>.canvas          cappy
 ```
 
-`run.js` chains all three and is what the LaunchAgent invokes every 900 s.
+`run.js` chains all four and is what the LaunchAgent invokes every 900 s.
+`canvas.js` runs last, drawing relationship canvases from `related`.
 
 ## What it will and will not touch
 
@@ -59,7 +61,7 @@ Notes are never moved between folders. Lifecycle lives in the `status` property.
 | `status`            | classify.js -> accept.js          | `proposed` -> `filed`                 |
 | `approve`           | classify.js writes `false`; you tick it; accept.js removes | checkbox |
 | `proposed_tags`     | classify.js                       | 1-4 tags, all from your taxonomy      |
-| `related`           | classify.js, kept on accept       | `[[Note title]]`, existing notes only |
+| `related`           | classify.js, kept on accept       | `[[Note title]]`, optionally ` :: label` |
 | `new_tag_proposals` | classify.js                       | suggested additions, often empty      |
 | `classifier_note`   | classify.js                       | one sentence of rationale             |
 | `classified_at`     | classify.js                       | ISO-8601 timestamp                    |
@@ -81,6 +83,51 @@ child of an existing node. Approving the note appends it to the taxonomy, and
 it is selectable from the next note onward. That is how the vocabulary grows:
 only through notes you approved.
 
+## Canvases
+
+`maps.js` answers "what is under this topic". `canvas.js` answers "how do these
+notes relate", as a [JSON Canvas](https://jsoncanvas.org) per top-level topic at
+`_maps/<topic>.canvas`: notes grouped into boxes by their sub-tag, with edges
+drawn from `related`.
+
+Only filed notes appear. `tags` is written solely by `accept.js`, so anything on
+a canvas has been through review by construction.
+
+Edges come from `related`, which takes an optional label:
+
+```yaml
+related:
+  - '[[Transformers]]'
+  - '[[Attention]] :: builds on'
+```
+
+The label after ` :: ` becomes the edge label. `#` cannot be the separator —
+YAML treats it as a comment and drops the label silently. The wikilinks must
+stay quoted for the same class of reason: bare `[[x]]` is YAML flow-sequence
+syntax and parses to a nested array rather than a string.
+
+Edges are only drawn between notes that are both on the same canvas; links
+pointing outside the topic are counted and reported, not drawn.
+
+**Generated canvases are safe to rearrange.** Node positions are read back
+before every regeneration and preserved, keyed by a hash of the note's path, so
+moving things around survives. New notes are placed by dagre and nudged clear of
+anything you have already positioned; existing nodes are never reflowed. Group
+boxes are recomputed each run from their members, so they follow your layout
+rather than fighting it.
+
+```bash
+node canvas.js                 # every topic
+node canvas.js ai              # one topic
+node canvas.js --dry-run       # summary only, writes nothing
+node canvas.js --relayout      # discard stored positions and reflow
+```
+
+Anything you curate beyond node positions — added text nodes, hand-drawn edges,
+your own grouping — will be lost on the next run. Keep that in a separate canvas
+that cappy does not generate; a file without cappy's marker node is left
+untouched, so any other `.canvas` in `_maps/` is safe.
+
 ## Commands
 
 ```bash
@@ -93,6 +140,7 @@ node classify.js           # classify everything pending
 node accept.js --dry-run
 node accept.js             # file everything approved
 node maps.js               # regenerate maps and Review.md
+node canvas.js [topic]     # regenerate relationship canvases
 node run.js                # all of the above, what launchd runs
 
 npm test                   # 38 assertions, no model calls, no vault needed

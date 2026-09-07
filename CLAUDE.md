@@ -42,6 +42,14 @@ authoritative: `--system-prompt-file` and `--max-turns` work but are undocumente
 - **Obsidian rewrites frontmatter formatting** whenever a human edits a note —
   it strips quotes, so a quoted timestamp comes back as a bare one that YAML
   parses as a date. Do not depend on a written value keeping its scalar type.
+- **`#` cannot separate a label in YAML** — it starts a comment, so
+  `- [[x]] # label` silently loses the label. And bare `[[x]]` is flow-sequence
+  syntax that parses to `[["x"]]`, not a string. `related` uses ` :: ` and keeps
+  its wikilinks quoted for these two reasons.
+- **dagre's compound graphs interleave clusters.** Laying out all groups in one
+  compound pass produced group boxes that entirely contained their neighbours,
+  which in Obsidian means dragging one group drags the other. `canvas.js` runs
+  one dagre pass per group and stacks the results instead.
 - **The rubric matters more than it looks.** "Propose a new tag only when
   nothing fits" never fired once in testing, because something always loosely
   fits. Asking whether the subject is *named* by an existing tag fixed it.
@@ -52,11 +60,13 @@ authoritative: `--system-prompt-file` and `--max-turns` work but are undocumente
 classify.js     select pending notes, call the model, validate, write
 accept.js       promote approved proposals to real tags; grow the taxonomy
 maps.js         regenerate _maps/<node>.md and _system/Review.md
-run.js          the three above in order, plus a daily vault snapshot
+canvas.js       regenerate _maps/<node>.canvas from `related` (no model call)
+run.js          the four above in order, plus a daily vault snapshot
 setup.js        one-shot machine setup; --check verifies and changes nothing
 lib/config.js   all paths, from cappy.config.json (gitignored)
 lib/taxonomy.js parse the vocabulary, build the JSON schema enum
 lib/frontmatter.js  split, parse, and edit frontmatter without touching bodies
+lib/links.js    parse `related` entries into { title, label }
 ```
 
 ## Testing without touching the real vault

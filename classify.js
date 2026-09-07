@@ -9,6 +9,7 @@ const { spawnSync } = require('child_process');
 const C = require('./lib/config.js');
 const { readTaxonomy, buildSchema } = require('./lib/taxonomy.js');
 const { splitNote, parseFm, addKeys } = require('./lib/frontmatter.js');
+const { parseRelated, formatRelated } = require('./lib/links.js');
 
 const log = (...a) => console.log(...a);
 const warn = (...a) => console.warn('  !', ...a);
@@ -125,10 +126,21 @@ function validate(out, tagSet, titleSet) {
     problems.push(`dropped tag not in taxonomy: ${t}`); return false;
   })).slice(0, C.MAX_TAGS);
 
-  const related = uniq(arr(out.related).map((t) => t.trim()).filter((t) => {
-    if (titleSet.has(t)) return true;
-    problems.push(`dropped related, no such note: ${t}`); return false;
-  })).slice(0, C.MAX_RELATED);
+  // Entries may carry an edge label after ` :: `; the title half must still be
+  // a note that exists. Labels are free text and only feed canvas edges.
+  const seenTitles = new Set();
+  const related = [];
+  for (const raw of arr(out.related)) {
+    const parsed = parseRelated(raw);
+    if (!parsed) { problems.push(`dropped unparseable related: ${raw}`); continue; }
+    if (!titleSet.has(parsed.title)) {
+      problems.push(`dropped related, no such note: ${parsed.title}`); continue;
+    }
+    if (seenTitles.has(parsed.title)) continue;
+    seenTitles.add(parsed.title);
+    related.push(formatRelated(parsed.title, parsed.label.slice(0, 60)));
+    if (related.length >= C.MAX_RELATED) break;
+  }
 
   const newTags = uniq(arr(out.new_tag_proposals).map((t) => t.trim().replace(/^#/, '')).filter((t) => {
     if (!TAG_RE.test(t)) { problems.push(`dropped malformed new tag: ${t}`); return false; }
@@ -146,7 +158,7 @@ function validate(out, tagSet, titleSet) {
     approve: false,
     status: 'proposed',
     proposed_tags: tags,
-    related: related.map((t) => `[[${t}]]`),
+    related,
     new_tag_proposals: newTags,
     classifier_note: note,
     classified_at: new Date().toISOString(),

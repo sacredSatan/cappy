@@ -20,6 +20,8 @@ const { parseTaxonomy, topLevelNodes, buildSchema } = require('./lib/taxonomy.js
 const { splitNote, parseFm, editFm, addKeys, scalar } = require('./lib/frontmatter.js');
 const { validate } = require('./classify.js');
 const { plan } = require('./accept.js');
+const { parseRelated, formatRelated } = require('./lib/links.js');
+const { subGroup, nodeId, groupId, edgeId, overlaps } = require('./canvas.js');
 const yaml = require('js-yaml');
 
 let pass = 0, fail = 0;
@@ -219,6 +221,77 @@ t('a new tag already in the taxonomy is not appended twice', () => {
   const r = plan(entry({ proposed_tags: ['misc'], new_tag_proposals: ['misc'] }), TAXSET);
   assert.deepStrictEqual(r.additions, []);
   assert.deepStrictEqual(r.tags, ['misc']);
+});
+
+group('related: labels survive YAML and Obsidian');
+t('bare wikilink parses to a title', () => {
+  assert.deepStrictEqual(parseRelated('[[Transformers]]'), { title: 'Transformers', label: '' });
+});
+t('label after :: is kept', () => {
+  assert.deepStrictEqual(parseRelated('[[Attention]] :: builds on'),
+    { title: 'Attention', label: 'builds on' });
+});
+t('a piped wikilink resolves to the target, not the alias', () => {
+  assert.strictEqual(parseRelated('[[Piped|Shown]]').title, 'Piped');
+});
+t('empty and non-string entries are rejected', () => {
+  for (const v of ['', '   ', null, 42, undefined]) assert.strictEqual(parseRelated(v), null);
+});
+t('formatRelated round-trips through YAML with the label intact', () => {
+  const entry = formatRelated('Attention', 'builds on');
+  const doc = yaml.load(`related:\n  - ${scalar(entry)}\n`);
+  assert.deepStrictEqual(parseRelated(doc.related[0]), { title: 'Attention', label: 'builds on' });
+});
+t('the label separator is NOT # (YAML would eat it as a comment)', () => {
+  // Regression guard: the original spec proposed "[[x]] # label".
+  const doc = yaml.load("related:\n  - '[[Attention]] # builds on'\n");
+  assert.ok(doc.related[0].includes('#'), 'quoted, so # survives');
+  const bare = yaml.load('related:\n  - [[Attention]] # builds on\n');
+  assert.deepStrictEqual(bare.related[0], [['Attention']], 'bare form is a nested sequence, label lost');
+});
+
+group('classify: related entries carry labels through validation');
+t('a labeled related entry is wrapped and kept', () => {
+  const r = validate({ proposed_tags: ['misc'], related: ['Real Note :: builds on'],
+    new_tag_proposals: [], classifier_note: '' }, TAGS, TITLES);
+  assert.deepStrictEqual(r.fields.related, ['[[Real Note]] :: builds on']);
+});
+t('a label on an invented title is still dropped', () => {
+  const r = validate({ proposed_tags: ['misc'], related: ['Nope :: builds on'],
+    new_tag_proposals: [], classifier_note: '' }, TAGS, TITLES);
+  assert.deepStrictEqual(r.fields.related, []);
+});
+t('duplicate titles collapse regardless of label', () => {
+  const r = validate({ proposed_tags: ['misc'], related: ['Real Note', 'Real Note :: x'],
+    new_tag_proposals: [], classifier_note: '' }, TAGS, TITLES);
+  assert.strictEqual(r.fields.related.length, 1);
+});
+
+group('canvas: ids and grouping');
+t('node ids are stable and path-derived', () => {
+  assert.strictEqual(nodeId('notes/A.md'), nodeId('notes/A.md'));
+  assert.notStrictEqual(nodeId('notes/A.md'), nodeId('notes/B.md'));
+  assert.match(nodeId('notes/A.md'), /^[0-9a-f]{16}$/);
+});
+t('group and edge ids are stable and distinct from node ids', () => {
+  assert.strictEqual(groupId('ai', 'llm'), groupId('ai', 'llm'));
+  assert.notStrictEqual(groupId('ai', 'llm'), nodeId('ai/llm'));
+  assert.strictEqual(edgeId('a', 'b'), edgeId('a', 'b'));
+  assert.notStrictEqual(edgeId('a', 'b'), edgeId('b', 'a'));
+});
+t('grouping uses the segment directly under the topic', () => {
+  assert.strictEqual(subGroup('ai', ['ai/llm/rag']), 'llm');
+  assert.strictEqual(subGroup('ai', ['ai/llm']), 'llm');
+  assert.strictEqual(subGroup('ai', ['ai/ml-basics']), 'ml-basics');
+});
+t('a note tagged only with the bare topic goes to Other', () => {
+  assert.strictEqual(subGroup('science', ['science']), 'Other');
+});
+t('overlap detection is correct on edges and corners', () => {
+  const a = { x: 0, y: 0, width: 100, height: 100 };
+  assert.ok(overlaps(a, { x: 50, y: 50, width: 100, height: 100 }));
+  assert.ok(!overlaps(a, { x: 100, y: 0, width: 100, height: 100 }), 'touching is not overlapping');
+  assert.ok(!overlaps(a, { x: 0, y: 200, width: 100, height: 100 }));
 });
 
 fs.rmSync(SCRATCH, { recursive: true, force: true });
