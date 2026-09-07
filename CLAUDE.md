@@ -50,9 +50,15 @@ authoritative: `--system-prompt-file` and `--max-turns` work but are undocumente
   compound pass produced group boxes that entirely contained their neighbours,
   which in Obsidian means dragging one group drags the other. `canvas.js` runs
   one dagre pass per group and stacks the results instead.
-- **The rubric matters more than it looks.** "Propose a new tag only when
-  nothing fits" never fired once in testing, because something always loosely
-  fits. Asking whether the subject is *named* by an existing tag fixed it.
+- **The rubric matters more than it looks, and "only when X" never fires.**
+  Twice now. "Propose a new tag only when nothing fits" never fired once,
+  because something always loosely fits. "Add a label only when the
+  relationship is specific" produced zero labels, including on a note that said
+  outright that its subject is what makes the other one work. Both were fixed
+  the same way: replace the subjective threshold with a positive question about
+  the note ("is the subject *named* by an existing tag?", "does the note state
+  how it relates?"). If a rubric clause is not firing, suspect its escape hatch
+  before you suspect the model.
 
 ## Layout
 

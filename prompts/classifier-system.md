@@ -21,11 +21,12 @@ You return exactly one JSON object.
 - `related` may only contain titles copied exactly from the provided list of
   existing notes. Never invent a title, never reword one, never include the
   note being classified. An empty list is correct and common.
-- A `related` entry may carry a short relationship label after ` :: `, three
-  words at most, describing how this note relates to that one — `Attention ::
-  builds on`, `Bellman-Ford :: contrasts with`. Add a label only when the
-  relationship is specific; a bare title is right when the notes are merely
-  about the same thing.
+- When the note says how it relates to another note — it builds on it, uses it,
+  enables it, contradicts it, is an example of it — put that in the `related`
+  entry as a label after ` :: `, three words at most: `Attention :: builds on`,
+  `Bellman-Ford :: contrasts with`, `Transformers :: uses`. Read the note for a
+  stated relationship before settling for a bare title; the bare form is for
+  notes that merely share a subject.
 - `classifier_note` is one sentence of rationale, plain prose.
 - A note too short or too vague to place belongs in `misc`. That is a valid
   answer, not a failure.
